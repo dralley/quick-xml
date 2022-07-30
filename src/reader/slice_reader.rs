@@ -10,7 +10,7 @@ use encoding_rs::UTF_8;
 use crate::errors::{Error, Result};
 use crate::events::Event;
 use crate::name::QName;
-use crate::reader::{is_whitespace, BangType, ReadElementState, Reader, XmlSource};
+use crate::reader::{is_whitespace, BangType, ReadElementState, Reader, TagState, XmlSource};
 
 use memchr;
 
@@ -21,15 +21,22 @@ impl<'a> Reader<&'a [u8]> {
     /// Creates an XML reader from a string slice.
     pub fn from_str(s: &'a str) -> Self {
         // Rust strings are guaranteed to be UTF-8, so lock the encoding
-        #[cfg(feature = "encoding")]
-        {
-            let mut reader = Self::from_reader(s.as_bytes());
-            reader.encoding = EncodingRef::Explicit(UTF_8);
-            reader
-        }
+        Self {
+            reader: s.as_bytes(),
+            opened_buffer: Vec::new(),
+            opened_starts: Vec::new(),
+            tag_state: TagState::Init,
+            expand_empty_elements: false,
+            trim_text_start: false,
+            trim_text_end: false,
+            trim_markup_names_in_closing_tags: true,
+            check_end_names: true,
+            buf_position: 0,
+            check_comments: false,
 
-        #[cfg(not(feature = "encoding"))]
-        Self::from_reader(s.as_bytes())
+            #[cfg(feature = "encoding")]
+            encoding: EncodingRef::Explicit(UTF_8),
+        }
     }
 
     /// Read an event that borrows from the input rather than a buffer.

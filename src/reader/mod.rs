@@ -1,5 +1,6 @@
 //! A module to handle `Reader`
 
+use std::io::Read;
 use std::str::from_utf8;
 
 #[cfg(feature = "encoding")]
@@ -330,7 +331,7 @@ pub struct Reader<R> {
 }
 
 /// Builder methods
-impl<R> Reader<R> {
+impl<R: Read> Reader<R> {
     /// Creates a `Reader` that reads from a given reader.
     pub fn from_reader(reader: R) -> Self {
         Self {

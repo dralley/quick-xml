@@ -5,7 +5,7 @@
 //! [expanded names]: https://www.w3.org/TR/xml-names11/#dt-expname
 
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Read};
 use std::ops::Deref;
 use std::path::Path;
 
@@ -32,7 +32,7 @@ pub struct NsReader<R> {
 }
 
 /// Builder methods
-impl<R> NsReader<R> {
+impl<R: Read> NsReader<R> {
     /// Creates a `NsReader` that reads from a reader.
     #[inline]
     pub fn from_reader(reader: R) -> Self {

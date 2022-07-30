@@ -6,11 +6,17 @@ use std::io::{self, BufRead, BufReader};
 use std::path::Path;
 
 use memchr;
+#[cfg(feature = "encoding")]
+use encoding_rs::UTF_8;
+#[cfg(feature = "encoding")]
+use encoding_rs_io::{DecodeReaderBytes, DecodeReaderBytesBuilder};
 
 use crate::errors::{Error, Result};
 use crate::events::Event;
 use crate::name::QName;
-use crate::reader::{is_whitespace, BangType, ReadElementState, Reader, XmlSource};
+#[cfg(feature = "encoding")]
+use crate::reader::EncodingRef;
+use crate::reader::{is_whitespace, BangType, ReadElementState, Reader, TagState, XmlSource};
 
 /// This is an implementation of [`Reader`] for reading from a [`BufRead`] as
 /// underlying byte stream.
@@ -217,12 +223,53 @@ impl<R: BufRead> Reader<R> {
     }
 }
 
+#[cfg(feature = "encoding")]
+impl Reader<BufReader<DecodeReaderBytes<File, Vec<u8>>>> {
+    /// Creates an XML reader from a file path.
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let file = File::open(path).map_err(Error::Io)?;
+        let decoder = DecodeReaderBytesBuilder::new()
+		.encoding(Some(UTF_8))
+		.bom_override(true)
+		.build(file);
+
+        let reader = Self {
+            reader: BufReader::new(decoder),
+            opened_buffer: Vec::new(),
+            opened_starts: Vec::new(),
+            tag_state: TagState::Init,
+            expand_empty_elements: false,
+            trim_text_start: false,
+            trim_text_end: false,
+            trim_markup_names_in_closing_tags: true,
+            check_end_names: true,
+            buf_position: 0,
+            check_comments: false,
+            encoding: EncodingRef::Implicit(UTF_8),
+        };
+        Ok(reader)
+    }
+}
+
+#[cfg(not(feature = "encoding"))]
 impl Reader<BufReader<File>> {
     /// Creates an XML reader from a file path.
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let file = File::open(path).map_err(Error::Io)?;
-        let reader = BufReader::new(file);
-        Ok(Self::from_reader(reader))
+        let reader = Self {
+            reader: BufReader::new(file),
+            opened_buffer: Vec::new(),
+            opened_starts: Vec::new(),
+            tag_state: TagState::Init,
+            expand_empty_elements: false,
+            trim_text_start: false,
+            trim_text_end: false,
+            trim_markup_names_in_closing_tags: true,
+            check_end_names: true,
+            buf_position: 0,
+            check_comments: false,
+        };
+        Ok(reader)
     }
 }
 
