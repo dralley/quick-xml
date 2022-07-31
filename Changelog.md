@@ -217,7 +217,6 @@
 [#439]: https://github.com/tafia/quick-xml/pull/439
 [#440]: https://github.com/tafia/quick-xml/pull/440
 
-
 ## 0.23.0 -- 2022-05-08
 
 - feat: add support for `i128` / `u128` in attributes or text/CDATA content

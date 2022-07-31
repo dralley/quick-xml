@@ -225,7 +225,7 @@ use serde::de::{self, Deserialize, DeserializeOwned, Visitor};
 use std::borrow::Cow;
 #[cfg(feature = "overlapped-lists")]
 use std::collections::VecDeque;
-use std::io::BufRead;
+use std::io::{BufReader, Read};
 #[cfg(feature = "overlapped-lists")]
 use std::num::NonZeroUsize;
 
@@ -301,7 +301,7 @@ where
 /// as much as possible, use [`from_str`].
 pub fn from_reader<R, T>(reader: R) -> Result<T, DeError>
 where
-    R: BufRead,
+    R: Read,
     T: DeserializeOwned,
 {
     let mut de = Deserializer::from_reader(reader);
@@ -685,7 +685,7 @@ impl<'de> Deserializer<'de, SliceReader<'de>> {
 
 impl<'de, R> Deserializer<'de, IoReader<R>>
 where
-    R: BufRead,
+    R: Read,
 {
     /// Create new deserializer that will copy data from the specified reader
     /// into internal buffer. If you already have a string use [`Self::from_str`]
@@ -908,12 +908,12 @@ pub trait XmlRead<'i> {
 ///
 /// You cannot create it, it is created automatically when you call
 /// [`Deserializer::from_reader`]
-pub struct IoReader<R: BufRead> {
-    reader: Reader<R>,
+pub struct IoReader<R: Read> {
+    reader: Reader<BufReader<R>>,
     buf: Vec<u8>,
 }
 
-impl<'i, R: BufRead> XmlRead<'i> for IoReader<R> {
+impl<'i, R: Read> XmlRead<'i> for IoReader<R> {
     fn next(&mut self) -> Result<DeEvent<'static>, DeError> {
         let event = loop {
             let e = self.reader.read_event_into(&mut self.buf)?;

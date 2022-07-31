@@ -32,14 +32,16 @@ pub struct NsReader<R> {
 }
 
 /// Builder methods
-impl<R: Read> NsReader<R> {
+impl<R> NsReader<R> {
+    configure_methods!(reader);
+}
+
+impl<R: Read> NsReader<BufReader<R>> {
     /// Creates a `NsReader` that reads from a reader.
     #[inline]
     pub fn from_reader(reader: R) -> Self {
         Self::new(Reader::from_reader(reader))
     }
-
-    configure_methods!(reader);
 }
 
 /// Private methods
@@ -509,7 +511,8 @@ impl<R: BufRead> NsReader<R> {
 impl NsReader<BufReader<File>> {
     /// Creates an XML reader from a file path.
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
-        Ok(Self::new(Reader::from_file(path)?))
+        let file = File::open(path)?;
+        Ok(Self::from_reader(file))
     }
 }
 

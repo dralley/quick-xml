@@ -330,33 +330,11 @@ pub struct Reader<R> {
     encoding: EncodingRef,
 }
 
-/// Builder methods
-impl<R: Read> Reader<R> {
-    /// Creates a `Reader` that reads from a given reader.
-    pub fn from_reader(reader: R) -> Self {
-        Self {
-            reader,
-            opened_buffer: Vec::new(),
-            opened_starts: Vec::new(),
-            tag_state: TagState::Init,
-            expand_empty_elements: false,
-            trim_text_start: false,
-            trim_text_end: false,
-            trim_markup_names_in_closing_tags: true,
-            check_end_names: true,
-            buf_position: 0,
-            check_comments: false,
-
-            #[cfg(feature = "encoding")]
-            encoding: EncodingRef::Implicit(UTF_8),
-        }
-    }
-
-    configure_methods!();
-}
-
 /// Getters
 impl<R> Reader<R> {
+    // Builder methods
+    configure_methods!();
+
     /// Consumes `Reader` returning the underlying reader
     ///
     /// Can be used to compute line and column of a parsing error position

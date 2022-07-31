@@ -2,7 +2,7 @@
 //! underlying byte stream.
 
 use std::fs::File;
-use std::io::{self, BufRead, BufReader};
+use std::io::{self, BufRead, BufReader, Read};
 use std::path::Path;
 
 use memchr;
@@ -223,6 +223,34 @@ impl<R: BufRead> Reader<R> {
     }
 }
 
+// #[cfg(feature = "encoding")]
+// impl<R: Read> Reader<BufReader<DecodeReaderBytes<R, Vec<u8>>>> {
+//     /// Creates an XML reader from a file path.
+//     pub fn from_read_impl<P: Read>(reader: P) -> Result<Self> {
+//         let decoder = DecodeReaderBytesBuilder::new()
+// 		.encoding(Some(UTF_8))
+// 		.bom_override(true)
+// 		.build(reader);
+
+//         let reader = Self {
+//             reader: BufReader::new(decoder),
+//             opened_buffer: Vec::new(),
+//             opened_starts: Vec::new(),
+//             tag_state: TagState::Init,
+//             expand_empty_elements: false,
+//             trim_text_start: false,
+//             trim_text_end: false,
+//             trim_markup_names_in_closing_tags: true,
+//             check_end_names: true,
+//             buf_position: 0,
+//             check_comments: false,
+//             encoding: EncodingRef::Implicit(UTF_8),
+//         };
+//         Ok(reader)
+//     }
+// }
+
+
 #[cfg(feature = "encoding")]
 impl Reader<BufReader<DecodeReaderBytes<File, Vec<u8>>>> {
     /// Creates an XML reader from a file path.
@@ -270,6 +298,51 @@ impl Reader<BufReader<File>> {
             check_comments: false,
         };
         Ok(reader)
+    }
+}
+
+#[cfg(not(feature = "encoding"))]
+impl<R: Read> Reader<BufReader<R>> {
+    /// Creates an XML reader from a file path.
+    pub fn from_reader(reader: R) -> Self {
+        Self {
+            reader: BufReader::new(reader),
+            opened_buffer: Vec::new(),
+            opened_starts: Vec::new(),
+            tag_state: TagState::Init,
+            expand_empty_elements: false,
+            trim_text_start: false,
+            trim_text_end: false,
+            trim_markup_names_in_closing_tags: true,
+            check_end_names: true,
+            buf_position: 0,
+            check_comments: false,
+        }
+    }
+}
+
+#[cfg(feature = "encoding")]
+impl<R: Read> Reader<BufReader<DecodeReaderBytes<R, Vec<u8>>>> {
+    /// Creates an XML reader from a file path.
+    pub fn from_reader(reader: R) -> Self {
+        let decoder = DecodeReaderBytesBuilder::new()
+		.encoding(Some(UTF_8))
+		.bom_override(true)
+		.build(reader);
+        Self {
+            reader: BufReader::new(decoder),
+            opened_buffer: Vec::new(),
+            opened_starts: Vec::new(),
+            tag_state: TagState::Init,
+            expand_empty_elements: false,
+            trim_text_start: false,
+            trim_text_end: false,
+            trim_markup_names_in_closing_tags: true,
+            check_end_names: true,
+            buf_position: 0,
+            check_comments: false,
+            encoding: EncodingRef::Implicit(UTF_8),
+        }
     }
 }
 
