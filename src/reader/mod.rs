@@ -32,29 +32,23 @@ macro_rules! configure_methods {
             self
         }
 
-        /// Changes whether whitespace before and after character data should be removed.
+        /// Changes whether whitespace-only text between elements (e.g. indentations) should be preserved.
         ///
-        /// When set to `true`, all [`Text`] events are trimmed. If they are empty, no event will be
-        /// pushed.
+        /// (`false` by default)
+        ///
+        /// [`Text`]: Event::Text
+        pub fn preserve_indentation_whitespace(&mut self, val: bool) -> &mut Self {
+            self $(.$holder)? .parser.preserve_indentation = val;
+            self
+        }
+
+        /// Changes whether whitespace before and after character data should be removed.
         ///
         /// (`false` by default)
         ///
         /// [`Text`]: Event::Text
         pub fn trim_text(&mut self, val: bool) -> &mut Self {
-            self $(.$holder)? .parser.trim_text_start = val;
-            self $(.$holder)? .parser.trim_text_end = val;
-            self
-        }
-
-        /// Changes whether whitespace after character data should be removed.
-        ///
-        /// When set to `true`, trailing whitespace is trimmed in [`Text`] events.
-        ///
-        /// (`false` by default)
-        ///
-        /// [`Text`]: Event::Text
-        pub fn trim_text_end(&mut self, val: bool) -> &mut Self {
-            self $(.$holder)? .parser.trim_text_end = val;
+            self $(.$holder)? .parser.trim_text = val;
             self
         }
 
@@ -428,7 +422,7 @@ impl<R> Reader<R> {
     {
         self.parser.state = ParseState::OpenedTag;
 
-        if self.parser.trim_text_start {
+        if !self.parser.preserve_indentation {
             self.reader.skip_whitespace(&mut self.parser.offset)?;
         }
 
@@ -700,10 +694,7 @@ impl ReadElementState {
 /// A function to check whether the byte is a whitespace (blank, new line, carriage return or tab)
 #[inline]
 pub(crate) fn is_whitespace(b: u8) -> bool {
-    match b {
-        b' ' | b'\r' | b'\n' | b'\t' => true,
-        _ => false,
-    }
+    matches!(b, b' ' | b'\r' | b'\n' | b'\t')
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

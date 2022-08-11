@@ -25,10 +25,10 @@ pub(super) struct Parser {
     pub state: ParseState,
     /// Expand empty element into an opening and closing element
     pub expand_empty_elements: bool,
-    /// Trims leading whitespace in Text events, skip the element if text is empty
-    pub trim_text_start: bool,
-    /// Trims trailing whitespace in Text events.
-    pub trim_text_end: bool,
+    /// Preserves whitespace-only text elements between events (e.g. indented "pretty" formatting).
+    pub preserve_indentation: bool,
+    /// Trims leading and trailing whitespace in Text events.
+    pub trim_text: bool,
     /// Trims trailing whitespaces from markup names in closing tags `</a >`
     pub trim_markup_names_in_closing_tags: bool,
     /// Check if [`Event::End`] nodes match last [`Event::Start`] node
@@ -83,7 +83,8 @@ impl Parser {
             }
         }
 
-        let content = if self.trim_text_end {
+        // TODO
+        let content = if self.trim_text {
             // Skip the ending '<
             let len = bytes
                 .iter()
@@ -265,8 +266,8 @@ impl Default for Parser {
             offset: 0,
             state: ParseState::Init,
             expand_empty_elements: false,
-            trim_text_start: false,
-            trim_text_end: false,
+            preserve_indentation: false,
+            trim_text: false,
             trim_markup_names_in_closing_tags: true,
             check_end_names: true,
             check_comments: false,

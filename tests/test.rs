@@ -170,8 +170,9 @@ fn fuzz_101() {
 }
 
 #[test]
-fn test_no_trim() {
+fn test_preserve_interelement_text() {
     let mut reader = Reader::from_str(" <tag> text </tag> ");
+    reader.preserve_interelement_text(true);
 
     assert!(matches!(reader.read_event().unwrap(), StartText(_)));
     assert!(matches!(reader.read_event().unwrap(), Start(_)));
@@ -181,25 +182,32 @@ fn test_no_trim() {
 }
 
 #[test]
-fn test_trim_end() {
+fn test_no_preserve_interelement_text() {
     let mut reader = Reader::from_str(" <tag> text </tag> ");
-    reader.trim_text_end(true);
 
-    assert!(matches!(reader.read_event().unwrap(), StartText(_)));
     assert!(matches!(reader.read_event().unwrap(), Start(_)));
     assert!(matches!(reader.read_event().unwrap(), Text(_)));
     assert!(matches!(reader.read_event().unwrap(), End(_)));
 }
 
-#[test]
-fn test_trim() {
-    let mut reader = Reader::from_str(" <tag> text </tag> ");
-    reader.trim_text(true);
+// #[test]
+// fn test_trim_text() {
+//     let mut reader = Reader::from_str(" <tag> text </tag> ");
+//     reader.trim_text(true);
 
-    assert!(matches!(reader.read_event().unwrap(), Start(_)));
-    assert!(matches!(reader.read_event().unwrap(), Text(_)));
-    assert!(matches!(reader.read_event().unwrap(), End(_)));
-}
+//     assert!(matches!(reader.read_event().unwrap(), Start(_)));
+//     assert!(matches!(reader.read_event().unwrap(), Text(_)));
+//     assert!(matches!(reader.read_event().unwrap(), End(_)));
+// }
+
+// #[test]
+// fn test_no_trim_text() {
+//     let mut reader = Reader::from_str(" <tag> text </tag> ");
+
+//     assert!(matches!(reader.read_event().unwrap(), Start(_)));
+//     assert!(matches!(reader.read_event().unwrap(), Text(_)));
+//     assert!(matches!(reader.read_event().unwrap(), End(_)));
+// }
 
 #[test]
 fn test_clone_reader() {

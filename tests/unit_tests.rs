@@ -522,7 +522,10 @@ fn test_read_write_roundtrip_results_in_identity() -> Result<()> {
     "#;
 
     let mut reader = Reader::from_str(input);
-    reader.trim_text(false).expand_empty_elements(false);
+    reader
+        .preserve_interelement_text(true)
+        .trim_text(false)
+        .expand_empty_elements(false);
     let mut writer = Writer::new(Cursor::new(Vec::new()));
     loop {
         match reader.read_event()? {
@@ -548,7 +551,10 @@ fn test_read_write_roundtrip() -> Result<()> {
     "#;
 
     let mut reader = Reader::from_str(input);
-    reader.trim_text(false).expand_empty_elements(false);
+    reader
+        .preserve_interelement_text(true)
+        .trim_text(false)
+        .expand_empty_elements(false);
     let mut writer = Writer::new(Cursor::new(Vec::new()));
     loop {
         match reader.read_event()? {
@@ -574,7 +580,10 @@ fn test_read_write_roundtrip_escape_text() -> Result<()> {
     "#;
 
     let mut reader = Reader::from_str(input);
-    reader.trim_text(false).expand_empty_elements(false);
+    reader
+        .preserve_interelement_text(true)
+        .trim_text(false)
+        .expand_empty_elements(false);
     let mut writer = Writer::new(Cursor::new(Vec::new()));
     loop {
         match reader.read_event()? {
