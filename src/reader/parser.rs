@@ -1,8 +1,6 @@
 #[cfg(feature = "encoding")]
 use encoding_rs::UTF_8;
 
-#[cfg(feature = "encoding")]
-use crate::encoding::detect_encoding;
 use crate::encoding::Decoder;
 use crate::errors::{Error, Result};
 use crate::events::{BytesCData, BytesDecl, BytesEnd, BytesStart, BytesText, Event};
@@ -23,6 +21,8 @@ pub(super) struct Parser {
     pub state: ParseState,
     /// Expand empty element into an opening and closing element
     pub expand_empty_elements: bool,
+    /// Ignore all data prior to the first XML event including any byte-order-mark (BOM) present
+    pub trim_before_first_element: bool,
     /// Trims leading whitespace in Text events, skip the element if text is empty
     pub trim_text_start: bool,
     /// Trims trailing whitespace in Text events.
@@ -67,14 +67,7 @@ impl Parser {
     /// - `bytes`: data from the start of stream to the first `<` or from `>` to `<`
     ///
     /// [`Text`]: Event::Text
-    pub fn read_text<'b>(&mut self, bytes: &'b [u8], first: bool) -> Result<Event<'b>> {
-        #[cfg(feature = "encoding")]
-        if first && self.encoding.can_be_refined() {
-            if let Some(encoding) = detect_encoding(bytes) {
-                self.encoding = EncodingRef::BomDetected(encoding);
-            }
-        }
-
+    pub fn read_text<'b>(&mut self, bytes: &'b [u8]) -> Result<Event<'b>> {
         let content = if self.trim_text_end {
             // Skip the ending '<'
             let len = bytes
@@ -85,6 +78,7 @@ impl Parser {
         } else {
             bytes
         };
+
         Ok(Event::Text(BytesText::wrap(content, self.decoder())))
     }
 
@@ -253,6 +247,7 @@ impl Default for Parser {
             offset: 0,
             state: ParseState::Init,
             expand_empty_elements: false,
+            trim_before_first_element: true,
             trim_text_start: false,
             trim_text_end: false,
             trim_markup_names_in_closing_tags: true,

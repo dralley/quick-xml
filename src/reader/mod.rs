@@ -2,6 +2,10 @@
 
 #[cfg(feature = "encoding")]
 use encoding_rs::Encoding;
+
+#[cfg(feature = "encoding")]
+use crate::encoding::detect_encoding;
+
 use std::ops::Range;
 
 use crate::encoding::Decoder;
@@ -13,7 +17,7 @@ use memchr;
 
 macro_rules! configure_methods {
     ($($holder:ident)?) => {
-        /// Changes whether empty elements should be split into an `Open` and a `Close` event.
+        /// Changes whether [`Empty`] events should be split into an `Open` and a `Close` event.
         ///
         /// When set to `true`, all [`Empty`] events produced by a self-closing tag like `<tag/>` are
         /// expanded into a [`Start`] event followed by an [`End`] event. When set to `false` (the
@@ -30,6 +34,23 @@ macro_rules! configure_methods {
         /// [`End`]: Event::End
         pub fn expand_empty_elements(&mut self, val: bool) -> &mut Self {
             self $(.$holder)? .parser.expand_empty_elements = val;
+            self
+        }
+
+        /// Changes whether all text prior to the first XML element, including any byte-order-mark (BOM),
+        /// will be removed.
+        ///
+        /// Generally this is the correct thing to do, as returning a [`Text`] event containing the BOM
+        /// character (U+FEFF) is often unexpected and undesirable. If you wish to output documents
+        /// that consistently use or do-not-use the BOM, that is best handled at the [`Writer`]. If you
+        /// want to precisely reproduce an original document, you may wish to disable this option.
+        ///
+        /// (`true` by default)
+        ///
+        /// [`Text`]: Event::Text
+        pub fn trim_before_first_element(&mut self, val: bool) -> &mut Self {
+            self $(.$holder)? .parser.trim_text_start = val;
+            self $(.$holder)? .parser.trim_text_end = val;
             self
         }
 
@@ -172,7 +193,20 @@ macro_rules! read_until_open {
             .read_bytes_until(b'<', $buf, &mut $self.parser.offset)
             $(.$await)?
         {
-            Ok(Some(bytes)) => $self.parser.read_text(bytes, $first),
+            Ok(Some(bytes)) => {
+                if $first {
+                    #[cfg(feature = "encoding")]
+                    if $self.parser.encoding.can_be_refined() {
+                        if let Some(encoding) = detect_encoding(bytes) {
+                            $self.parser.encoding = EncodingRef::BomDetected(encoding);
+                        }
+                    }
+                    if $self.parser.trim_before_first_element {
+                        $self.parser.offset += bytes.len();
+                    }
+                }
+                $self.parser.read_text(bytes)
+            }
             Ok(None) => Ok(Event::Eof),
             Err(e) => Err(e),
         }

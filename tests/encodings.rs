@@ -1,4 +1,9 @@
+#[allow(unused_imports)]
+use std::io::Cursor;
+
+#[allow(unused_imports)]
 use quick_xml::events::Event;
+#[allow(unused_imports)]
 use quick_xml::Reader;
 
 #[cfg(feature = "encoding")]
@@ -92,8 +97,6 @@ fn test_koi8_r_encoding() {
 #[test]
 #[cfg(feature = "encoding")]
 fn fuzz_53() {
-    use std::io::Cursor;
-
     let data: &[u8] = b"\xe9\x00\x00\x00\x00\x00\x00\x00\x00\
 \x00\x00\x00\x00\n(\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\
 \x00<>\x00\x08\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00<<\x00\x00\x00";
@@ -111,8 +114,6 @@ fn fuzz_53() {
 #[test]
 #[cfg(feature = "encoding")]
 fn fuzz_101() {
-    use std::io::Cursor;
-
     let data: &[u8] = b"\x00\x00<\x00\x00\x0a>&#44444444401?#\x0a413518\
                        #\x0a\x0a\x0a;<:<)(<:\x0a\x0a\x0a\x0a;<:\x0a\x0a\
                        <:\x0a\x0a\x0a\x0a\x0a<\x00*\x00\x00\x00\x00";
